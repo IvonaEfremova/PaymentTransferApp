@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="202512220183000_create_account_table" author="ivonaefremova">
+        <createTable tableName="account">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="owner_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="balance" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="202512220183000_create_transaction_table" author="ivonaefremova">
+        <createTable tableName="transaction">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="transaction_id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="source_account_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination_account_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_reason" type="TEXT"/>
+            <column name="idempotency_key" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="transaction" baseColumnNames="source_account_id"
+                referencedTableName="account" referencedColumnNames="id"
+                constraintName="fk_transaction_source"/>
+
+        <addForeignKeyConstraint
+                baseTableName="transaction" baseColumnNames="destination_account_id"
+                referencedTableName="account" referencedColumnNames="id"
+                constraintName="fk_transaction_destination"/>
+    </changeSet>
+
+    <changeSet id="202512220183000_create_balance_audit_table" author="ivonaefremova">
+        <createTable tableName="balance_audit">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="before_balance" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="after_balance" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="balance_audit" baseColumnNames="account_id"
+                referencedTableName="account" referencedColumnNames="id"
+                constraintName="fk_audit_account"/>
+
+        <addForeignKeyConstraint
+                baseTableName="balance_audit" baseColumnNames="transaction_id"
+                referencedTableName="transaction" referencedColumnNames="id"
+                constraintName="fk_audit_transaction"/>
+    </changeSet>
+
+    <changeSet id="202512220183000_create_idempotency_key" author="ivonaefremova">
+        <createTable tableName="idempotency_key">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="key_value" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="202512220183002_insert_sample_accounts" author="ivonaefremova">
+        <!-- MKD Accounts -->
+        <insert tableName="account">
+            <column name="account_number" value="ACC005"/>
+            <column name="owner_name" value="Petar Petrovski"/>
+            <column name="balance" valueNumeric="50000.00"/>
+            <column name="currency" value="MKD"/>
+        </insert>
+
+        <insert tableName="account">
+            <column name="account_number" value="ACC006"/>
+            <column name="owner_name" value="Ana Jovanovska"/>
+            <column name="balance" valueNumeric="25000.00"/>
+            <column name="currency" value="MKD"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
